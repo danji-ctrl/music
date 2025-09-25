@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Waveletter — Audio Player</title>
+  <style>
+    body { background: #111; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background: rgba(255,255,255,0.03); padding:20px; border-radius:12px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); max-width:520px; width:90%; text-align:center; }
+    audio { width:100%; margin-top:12px; }
+    .title { font-size:18px; font-weight:600; }
+    .note { font-size:13px; color:#bbb; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title">Waveletter</div>
+    <audio id="player" controls playsinline preload="metadata">
+      <source src="Waveletter.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+    <div class="note">Tap Play. On iPhone Safari, controls & inline play are supported. Autoplay may be blocked.</div>
+  </div>
+  <script>
+    // Attempt to enable inline playback on iOS and show a big play button if desired.
+    const player = document.getElementById('player');
+    document.addEventListener('click', ()=>{ if(player.paused) player.play().catch(()=>{}); }, { once: true });
+  </script>
+</body>
+</html>
