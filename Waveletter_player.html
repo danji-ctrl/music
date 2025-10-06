@@ -38,4 +38,190 @@
 
     /* light effect */
     .popup::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 20% 10%, rgba(255,220,80,0.22), transparent 12%), radial-gradient(circle at 80% 80%, rgba(255,80,120,0.12), transparent 10%);animation:glow 3s ease-in-out infinite}
-    @keyframes glow{0%{transform:scale(1)}50%{transform:
+    @keyframes glow{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+
+    .prize-card{position:relative;z-index:2;padding:18px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+    .prize-emoji{font-size:64px;margin-bottom:6px}
+    .prize-title{font-size:20px;font-weight:800;margin:0}
+    .prize-desc{color:#9fb3c9;margin-top:6px}
+
+    .continue-btn{margin-top:18px;padding:10px 16px;border-radius:10px;background:linear-gradient(90deg,#00d4ff,#0066ff);color:#fff;font-weight:700;border:none;cursor:pointer}
+
+    /* small responsive */
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;}
+      .wheel-box{width:320px;height:320px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="wheel-area">
+      <div class="wheel-box">
+        <div class="pointer" aria-hidden><div class="arrow"></div></div>
+        <div id="wheel" class="wheel" role="img" aria-label="Vòng quay may mắn"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button id="spinBtn" class="btn spin-btn">SPIN</button>
+        <div class="sm">Kết quả: <strong id="resultLabel">—</strong></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Quay may mắn</h2>
+      <div class="turns">Lượt còn lại: <strong id="turnsLeft">3</strong></div>
+      <div class="sm">Mỗi lượt chỉ quay 1 lần. Chúc bạn may mắn!</div>
+
+      <div style="margin-top:auto">
+        <button id="resetBtn" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dbeeff">Reset lượt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="popup">
+      <div class="prize-card">
+        <div class="prize-emoji" id="prizeEmoji">🎉</div>
+        <h3 class="prize-title" id="prizeTitle">Bạn đã thắng!</h3>
+        <p class="prize-desc" id="prizeDesc">Mô tả phần thưởng</p>
+        <button id="continueBtn" class="continue-btn">Tiếp tục</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cấu hình phần thưởng
+    const prizes = [
+      {label: '50k VNĐ', emoji: '💵', desc: 'Mã giảm giá 50,000đ'},
+      {label: 'Thưởng 100k', emoji: '🏆', desc: 'Tiền thưởng 100,000đ'},
+      {label: 'Voucher 30%', emoji: '🎟️', desc: 'Voucher giảm 30%'},
+      {label: 'Quà lưu niệm', emoji: '🎁', desc: 'Quà tặng độc quyền'},
+      {label: 'Miễn phí vận chuyển', emoji: '🚚', desc: 'Miễn phí ship 1 đơn'},
+      {label: 'Cảm ơn đã tham gia', emoji: '👏', desc: 'Không có phần thưởng'}
+    ];
+
+    const wheel = document.getElementById('wheel');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultLabel = document.getElementById('resultLabel');
+    const turnsLeftEl = document.getElementById('turnsLeft');
+    const overlay = document.getElementById('overlay');
+    const prizeEmoji = document.getElementById('prizeEmoji');
+    const prizeTitle = document.getElementById('prizeTitle');
+    const prizeDesc = document.getElementById('prizeDesc');
+    const continueBtn = document.getElementById('continueBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let turnsLeft = 3; // số lượt mặc định
+    let spinning = false;
+    let currentRotation = 0;
+
+    function renderWheel(){
+      wheel.innerHTML = '';
+      const len = prizes.length;
+      const angle = 360 / len;
+      for(let i=0;i<len;i++){
+        const seg = document.createElement('div');
+        seg.className = 'segment';
+        const rot = i * angle;
+        seg.style.transform = `rotate(${rot}deg) translate(-100%, -100%)`;
+
+        const segInner = document.createElement('div');
+        segInner.style.transform = `rotate(${angle/2}deg)`;
+        segInner.innerHTML = `<div class="label">${prizes[i].label}</div>`;
+        seg.appendChild(segInner);
+
+        // alternating colors
+        seg.style.background = i%2===0 ? 'conic-gradient(from 0deg, rgba(255,255,255,0.03), transparent)' : 'conic-gradient(from 0deg, rgba(255,255,255,0.01), transparent)';
+        wheel.appendChild(seg);
+      }
+      // draw center circle
+      const center = document.createElement('div');
+      center.style.width = '36%';center.style.height='36%';center.style.borderRadius='50%';center.style.position='absolute';center.style.left='50%';center.style.top='50%';center.style.transform='translate(-50%,-50%)';center.style.background='linear-gradient(180deg,#081827,#0b2130)';center.style.display='grid';center.style.placeItems='center';center.style.zIndex='2';
+      center.innerHTML = `<div style="font-weight:800;font-size:18px;letter-spacing:1px;color:var(--accent)">QUAY</div>`;
+      wheel.appendChild(center);
+    }
+
+    function spinOnce(){
+      if(spinning) return;
+      if(turnsLeft<=0){alert('Bạn đã hết lượt quay.');return}
+      spinning=true;
+      spinBtn.disabled=true;
+
+      // chọn kết quả ngẫu nhiên (có thể thay bằng logic tỉ lệ)
+      const winnerIndex = Math.floor(Math.random()*prizes.length);
+      const len = prizes.length;
+      const anglePer = 360/len;
+
+      // tính góc để dừng: chúng ta muốn đưa mid của segment về pointer (0deg)
+      const randomRound = Math.floor(Math.random()*3)+3; // 3..5 vòng
+      const targetAngle = 360 - (winnerIndex * anglePer + anglePer/2);
+      const finalRotation = randomRound*360 + targetAngle;
+
+      currentRotation = (currentRotation + finalRotation) % 360;
+      wheel.style.transition = 'transform 4s cubic-bezier(.12,.9,.24,.99)';
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      // khi animation kết thúc
+      wheel.addEventListener('transitionend', function handler(){
+        wheel.removeEventListener('transitionend', handler);
+        spinning=false;
+        turnsLeft--;
+        updateUI();
+        showPrize(winnerIndex);
+      });
+    }
+
+    function updateUI(){
+      turnsLeftEl.textContent = turnsLeft;
+      if(turnsLeft<=0) spinBtn.disabled=true;
+    }
+
+    function showPrize(index){
+      const p = prizes[index];
+      prizeEmoji.textContent = p.emoji;
+      prizeTitle.textContent = p.label;
+      prizeDesc.textContent = p.desc;
+      resultLabel.textContent = p.label;
+
+      // thêm hiệu ứng: animation nhỏ cho emoji
+      prizeEmoji.animate([
+        { transform: 'scale(0.6) rotate(-10deg)', opacity:0.6 },
+        { transform: 'scale(1.12) rotate(6deg)', opacity:1 },
+        { transform: 'scale(1) rotate(0)' }
+      ],{ duration:650, easing:'cubic-bezier(.17,.67,.33,1)' });
+
+      overlay.classList.add('show');
+
+      // optional: highlight winning segment briefly
+      flashWinningSegment(index);
+    }
+
+    function flashWinningSegment(index){
+      // simple glow on wheel center while popup
+      const highlight = document.createElement('div');
+      highlight.style.position='absolute';highlight.style.inset='0';highlight.style.borderRadius='50%';highlight.style.boxShadow='0 0 60px 18px rgba(255,204,0,0.12)';highlight.style.pointerEvents='none';highlight.style.zIndex='1';
+      wheel.appendChild(highlight);
+      setTimeout(()=>{highlight.remove();},2000);
+    }
+
+    continueBtn.addEventListener('click', ()=>{
+      overlay.classList.remove('show');
+      if(turnsLeft<=0){spinBtn.disabled=true;} else {spinBtn.disabled=false}
+    });
+
+    spinBtn.addEventListener('click', ()=>spinOnce());
+    resetBtn.addEventListener('click', ()=>{turnsLeft=3;updateUI();spinBtn.disabled=false;resultLabel.textContent='—'});
+
+    // init
+    renderWheel();
+    updateUI();
+
+    // accessibility: space/enter to spin
+    document.addEventListener('keydown', (e)=>{
+      if((e.code==='Space' || e.key==='Enter') && !spinning){
+        spinOnce();
+      }
+    });
+  </script>
+</body>
+</html>
