@@ -1,30 +1,41 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Waveletter — Audio Player</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spin Wheel - Quay may mắn</title>
   <style>
-    body { background: #111; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
-    .card { background: rgba(255,255,255,0.03); padding:20px; border-radius:12px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); max-width:520px; width:90%; text-align:center; }
-    audio { width:100%; margin-top:12px; }
-    .title { font-size:18px; font-weight:600; }
-    .note { font-size:13px; color:#bbb; margin-top:8px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="title">Waveletter</div>
-    <audio id="player" controls playsinline preload="metadata">
-      <source src="Waveletter.mp3" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
-    <div class="note">Tap Play. On iPhone Safari, controls & inline play are supported. Autoplay may be blocked.</div>
-  </div>
-  <script>
-    // Attempt to enable inline playback on iOS and show a big play button if desired.
-    const player = document.getElementById('player');
-    document.addEventListener('click', ()=>{ if(player.paused) player.play().catch(()=>{}); }, { once: true });
-  </script>
-</body>
-</html>
+    :root{--accent:#ffcc00;--bg:#0f1724;--card:#0b1220}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071025 0%, #0b1220 60%);color:#e6eef8;font-family:Inter,system-ui,Arial;display:flex;align-items:center;justify-content:center;padding:24px}
+
+    .wrap{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:16px;padding:24px;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:center;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+
+    /* Left: Wheel */
+    .wheel-area{display:flex;flex-direction:column;align-items:center;gap:18px}
+    .wheel-box{width:420px;height:420px;display:grid;place-items:center;position:relative}
+    .wheel{width:360px;height:360px;border-radius:50%;position:relative;transition:transform 4s cubic-bezier(.12,.9,.24,.99);box-shadow:0 12px 30px rgba(2,6,23,0.6), inset 0 2px 8px rgba(255,255,255,0.02)}
+    .wheel .segment{position:absolute;left:50%;top:50%;transform-origin:0 0;width:50%;height:50%;overflow:visible}
+    .wheel .segment .label{position:absolute;left:50%;top:50%;transform:translate(-50%,-40%) rotate(0deg);width:40%;text-align:center;font-weight:600;font-size:14px}
+
+    /* pointer */
+    .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:3}
+    .pointer .arrow{width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid var(--accent);filter:drop-shadow(0 6px 10px rgba(0,0,0,0.6))}
+
+    /* Right: Controls */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));padding:18px;border-radius:12px;height:100%;display:flex;flex-direction:column;gap:12px}
+    .panel h2{margin:0;font-size:18px}
+    .turns{font-size:16px;padding:10px 12px;background:rgba(255,255,255,0.02);border-radius:8px}
+    .btn{display:inline-block;padding:12px 18px;border-radius:10px;font-weight:700;border:none;cursor:pointer}
+    .spin-btn{background:linear-gradient(90deg,#ff7a00,#ffcc00);color:#08121b;font-size:18px;box-shadow:0 8px 24px rgba(255,136,0,0.18)}
+    .spin-btn[disabled]{opacity:0.5;cursor:not-allowed}
+    .sm{font-size:13px;color:#a9bdcf}
+
+    /* Popup */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,8,18,0.6);backdrop-filter:blur(4px);z-index:40}
+    .overlay.show{display:flex}
+    .popup{width:92%;max-width:560px;background:linear-gradient(180deg,#071426 0%, #071426 70%);border-radius:14px;padding:26px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(2,6,23,0.7);overflow:hidden}
+
+    /* light effect */
+    .popup::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 20% 10%, rgba(255,220,80,0.22), transparent 12%), radial-gradient(circle at 80% 80%, rgba(255,80,120,0.12), transparent 10%);animation:glow 3s ease-in-out infinite}
+    @keyframes glow{0%{transform:scale(1)}50%{transform:
